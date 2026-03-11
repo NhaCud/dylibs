@@ -1,0 +1,9 @@
+Package: com.nhacud.fakecamera
+Name: FakeCamera
+Version: 2.0
+Architecture: iphoneos-arm64
+Description: Fake Camera Hook
+Maintainer: Nha
+Author: Nha
+Section: Tweaks
+Depends: mobilesubstrate
