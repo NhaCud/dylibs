@@ -16,16 +16,16 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang make git perl unzip
+          sudo apt install -y clang make git perl unzip ldid
 
       - name: Install Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-      - name: Download iOS SDK
+      - name: Install iOS Toolchain
         run: |
-          rm -rf $HOME/theos/sdks
           git clone https://github.com/theos/sdks.git $HOME/theos/sdks
+          git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain
 
       - name: Set environment
         run: |
