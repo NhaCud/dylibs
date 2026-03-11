@@ -1,0 +1,38 @@
+#import <UIKit/UIKit.h>
+#import <AVFoundation/AVFoundation.h>
+
+static AVAssetReader *reader = nil;
+static AVAssetReaderTrackOutput *output = nil;
+
+// Hàm lấy frame từ video nằm trong App Bundle
+CMSampleBufferRef getNextBuffer() {
+    if (!reader || [reader status] == AVAssetReaderStatusCompleted) {
+        // App sẽ tìm file "video.mp4" bạn thêm vào qua ESign
+        NSString *path = [[NSBundle mainBundle] pathForResource:@"video" ofType:@"mp4"];
+        if (!path) return NULL;
+
+        NSURL *url = [NSURL fileURLWithPath:path];
+        AVAsset *asset = [AVAsset assetWithURL:url];
+        AVAssetTrack *track = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject];
+        
+        NSError *error;
+        reader = [[AVAssetReader alloc] initWithAsset:asset error:&error];
+        output = [AVAssetReaderTrackOutput assetReaderTrackOutputWithTrack:track 
+                                                            outputSettings:@{(id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)}];
+        [reader addOutput:output];
+        [reader startReading];
+    }
+    return [output copyNextSampleBuffer];
+}
+
+%hook AVCaptureVideoDataOutput
+- (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
+    CMSampleBufferRef fakeFrame = getNextBuffer();
+    if (fakeFrame) {
+        %orig(captureOutput, fakeFrame, connection);
+        CFRelease(fakeFrame);
+    } else {
+        %orig;
+    }
+}
+%end
