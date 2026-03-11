@@ -2,6 +2,7 @@ name: Build FakeCamera
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -9,31 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y clang make git perl
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y clang make git perl unzip
 
-    - name: Install Theos
-      run: |
-        git clone --recursive https://github.com/theos/theos.git $HOME/theos
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-    - name: Set environment
-      run: |
-        echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+      - name: Set environment
+        run: |
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
 
-    - name: Build tweak
-      run: |
-        make clean
-        make
+      - name: Build tweak
+        run: |
+          make clean
+          make package
 
-    - name: Upload dylib
-      uses: actions/upload-artifact@v3
-      with:
-        name: FakeCamera
-        path: |
-          .theos/obj/debug/FakeCamera.dylib
-          .theos/obj/debug/arm64/FakeCamera.dylib
+      - name: Upload dylib
+        uses: actions/upload-artifact@v3
+        with:
+          name: FakeCamera
+          path: |
+            .theos/obj/debug/FakeCamera.dylib
+            packages/*.deb
