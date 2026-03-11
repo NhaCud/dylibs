@@ -9,40 +9,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y git make perl unzip clang
+          sudo apt install -y git make perl clang unzip
 
       - name: Install Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-      - name: Install iOS SDK
+      - name: Install Toolchain
+        run: |
+          git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain
+
+      - name: Install SDKs
         run: |
           rm -rf $HOME/theos/sdks
           git clone https://github.com/theos/sdks.git $HOME/theos/sdks
 
-      - name: Fix toolchain
-        run: |
-          mkdir -p $HOME/theos/toolchain/linux/iphone/bin
-          ln -s /usr/bin/clang $HOME/theos/toolchain/linux/iphone/bin/clang
-          ln -s /usr/bin/clang++ $HOME/theos/toolchain/linux/iphone/bin/clang++
-
-      - name: Set THEOS
-        run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-
-      - name: Build
+      - name: Build tweak
+        env:
+          THEOS: $HOME/theos
+          PATH: $HOME/theos/toolchain/linux/iphone/bin:$PATH
         run: |
           make clean
           make package
 
-      - name: Upload dylib
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
           name: FakeCamera
-          path: |
-            .theos/obj/debug/FakeCamera.dylib
-            packages/*.deb
+          path: packages/*.deb
