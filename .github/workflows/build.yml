@@ -20,11 +20,7 @@ jobs:
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-      - name: Install iOS SDK
-        run: |
-          git clone https://github.com/theos/sdks.git $HOME/theos/sdks
-
-      - name: Install Toolchain
+      - name: Fix toolchain
         run: |
           mkdir -p $HOME/theos/toolchain/linux/iphone/bin
           ln -s /usr/bin/clang $HOME/theos/toolchain/linux/iphone/bin/clang
