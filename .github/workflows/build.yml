@@ -22,6 +22,10 @@ jobs:
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
+      - name: Download iOS SDK
+        run: |
+          git clone https://github.com/theos/sdks.git $HOME/theos/sdks
+
       - name: Set environment
         run: |
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
