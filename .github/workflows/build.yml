@@ -20,6 +20,11 @@ jobs:
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
+      - name: Install iOS SDK
+        run: |
+          rm -rf $HOME/theos/sdks
+          git clone https://github.com/theos/sdks.git $HOME/theos/sdks
+
       - name: Fix toolchain
         run: |
           mkdir -p $HOME/theos/toolchain/linux/iphone/bin
@@ -34,7 +39,7 @@ jobs:
           make clean
           make package
 
-      - name: Upload
+      - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
           name: FakeCamera
