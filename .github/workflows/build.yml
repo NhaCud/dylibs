@@ -1,0 +1,30 @@
+name: Build iOS Tweak
+
+on: [push]
+
+jobs:
+ build:
+
+  runs-on: ubuntu-latest
+
+  steps:
+
+  - uses: actions/checkout@v3
+
+  - name: Install Theos
+    run: |
+      git clone --recursive https://github.com/theos/theos.git $HOME/theos
+
+  - name: Setup environment
+    run: |
+      echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+
+  - name: Build
+    run: |
+      make
+
+  - name: Upload dylib
+    uses: actions/upload-artifact@v3
+    with:
+      name: FakeCamera
+      path: .theos/obj/debug/FakeCamera.dylib
