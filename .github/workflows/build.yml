@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Install dependencies
@@ -31,7 +31,7 @@ jobs:
           make clean
           make package
 
-      - name: Upload dylib
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: FakeCamera
