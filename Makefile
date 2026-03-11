@@ -5,6 +5,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = FakeCamera
 
 FakeCamera_FILES = Tweak.xm
-FakeCamera_FRAMEWORKS = AVFoundation UIKit
+FakeCamera_FRAMEWORKS = AVFoundation UIKit CoreMedia
+FakeCamera_PLIST = FakeCamera.plist
 
 include $(THEOS_MAKE_PATH)/tweak.mk
