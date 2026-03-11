@@ -9,8 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -23,14 +22,13 @@ jobs:
 
       - name: Install iOS SDK
         run: |
-          rm -rf $HOME/theos/sdks
           git clone https://github.com/theos/sdks.git $HOME/theos/sdks
 
       - name: Install Toolchain
         run: |
-          wget https://github.com/theos/theos/releases/download/v2.4.3/toolchain-linux.tar.gz
-          mkdir -p $HOME/theos/toolchain
-          tar -xzf toolchain-linux.tar.gz -C $HOME/theos/toolchain
+          mkdir -p $HOME/theos/toolchain/linux/iphone/bin
+          ln -s /usr/bin/clang $HOME/theos/toolchain/linux/iphone/bin/clang
+          ln -s /usr/bin/clang++ $HOME/theos/toolchain/linux/iphone/bin/clang++
 
       - name: Set THEOS
         run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
@@ -40,7 +38,7 @@ jobs:
           make clean
           make package
 
-      - name: Upload dylib
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: FakeCamera
