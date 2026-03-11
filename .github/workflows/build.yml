@@ -27,11 +27,6 @@ jobs:
           rm -rf $HOME/theos/sdks
           git clone https://github.com/theos/sdks.git $HOME/theos/sdks
 
-      - name: Install Toolchain
-        run: |
-          rm -rf $HOME/theos/toolchain
-          git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain
-
       - name: Set environment
         run: |
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
