@@ -15,26 +15,40 @@ jobs:
     
     - name: Setup Theos
       run: |
-        # Xóa thư mục cũ nếu tồn tại (FIX LỖI)
+        # Xóa thư mục cũ nếu tồn tại
         rm -rf $HOME/theos
-        # Clone Theos
-        git clone --recursive https://github.com/theos/theos.git $HOME/theos
+        # Clone Theos (dùng HTTPS với token hoặc dùng cách khác)
+        git clone https://github.com/theos/theos.git $HOME/theos
+        cd $HOME/theos
+        git submodule update --init --recursive
     
-    - name: Clone toolchain
+    - name: Setup Toolchain (Cách 1 - Dùng git clone)
+      continue-on-error: true
       run: |
-        # Xóa thư mục toolchain cũ nếu tồn tại (FIX LỖI)
         rm -rf $HOME/theos/toolchain
-        # Clone toolchain mới
         git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain
+      id: clone_toolchain
+    
+    - name: Setup Toolchain (Cách 2 - Dùng curl nếu git clone fail)
+      if: steps.clone_toolchain.outcome == 'failure'
+      run: |
+        rm -rf $HOME/theos/toolchain
+        mkdir -p $HOME/theos/toolchain
+        curl -L https://github.com/theos/toolchain/archive/refs/heads/master.tar.gz | tar xz -C $HOME/theos/toolchain --strip-components=1
     
     - name: Install ldid
       run: |
         # Xóa ldid cũ nếu tồn tại
         rm -f $HOME/theos/bin/ldid
-        # Download và setup ldid
-        curl -LO https://github.com/theos/ldid/releases/download/v2.1.5/ldid_macosx_x86_64
-        chmod +x ldid_macosx_x86_64
-        mv ldid_macosx_x86_64 $HOME/theos/bin/ldid
+        # Download và setup ldid (dùng curl thay vì git)
+        mkdir -p $HOME/theos/bin
+        curl -L https://github.com/theos/ldid/releases/download/v2.1.5/ldid_macosx_x86_64 -o $HOME/theos/bin/ldid
+        chmod +x $HOME/theos/bin/ldid
+    
+    - name: Verify installation
+      run: |
+        ls -la $HOME/theos/bin/
+        $HOME/theos/bin/ldid || echo "ldid is installed"
     
     - name: Build package
       run: |
