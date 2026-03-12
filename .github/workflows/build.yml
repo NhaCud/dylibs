@@ -11,7 +11,7 @@ jobs:
     runs-on: macos-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Setup Theos
       run: |
@@ -20,51 +20,38 @@ jobs:
         cd $HOME/theos
         git submodule update --init --recursive
     
-    - name: Setup Toolchain (with robust fallbacks)
+    - name: Setup Toolchain
       run: |
         rm -rf $HOME/theos/toolchain
         mkdir -p $HOME/theos/toolchain
         
-        echo "🔍 Attempt 1: Cloning via git..."
+        # Thử clone bằng git
         if git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain-temp 2>/dev/null; then
           mv $HOME/theos/toolchain-temp/* $HOME/theos/toolchain/ 2>/dev/null || true
           rm -rf $HOME/theos/toolchain-temp
-          echo "✅ Git clone successful"
+          echo "Git clone successful"
         else
-          echo "⚠️ Git clone failed. Attempt 2: Downloading via curl with known working URL..."
-          # Sử dụng URL từ trang chủ theos (đã được kiểm chứng)
-          curl -L https://theos.dev/toolchain.tar.gz -o /tmp/toolchain.tar.gz || {
-            echo "⚠️ Primary download failed. Attempt 3: Trying GitHub archive with different path..."
-            curl -L https://github.com/theos/toolchain/archive/master.tar.gz -o /tmp/toolchain.tar.gz
-          }
+          echo "Git clone failed, trying download..."
+          # Download từ theos.dev
+          curl -L https://theos.dev/toolchain.tar.gz -o /tmp/toolchain.tar.gz || \
+          curl -L https://github.com/theos/toolchain/archive/master.tar.gz -o /tmp/toolchain.tar.gz
           
-          # Kiểm tra file tải về có hợp lệ không
-          if [ -s /tmp/toolchain.tar.gz ] && file /tmp/toolchain.tar.gz | grep -q "gzip compressed data"; then
+          # Kiểm tra và giải nén
+          if [ -s /tmp/toolchain.tar.gz ]; then
             tar xzf /tmp/toolchain.tar.gz -C $HOME/theos/toolchain --strip-components=1
-            echo "✅ Toolchain downloaded and extracted successfully"
+            echo "Download successful"
           else
-            echo "❌ All download methods failed. File is invalid or empty."
+            echo "Download failed"
             exit 1
           fi
-        fi
-        
-        # Kiểm tra kết quả cuối cùng
-        if [ -f "$HOME/theos/toolchain/configure" ] || [ -d "$HOME/theos/toolchain/bin" ]; then
-          echo "✅ Toolchain is ready"
-        else
-          echo "❌ Toolchain setup failed - missing critical files"
-          exit 1
         fi
     
     - name: Install ldid
       run: |
         rm -f $HOME/theos/bin/ldid
         mkdir -p $HOME/theos/bin
-        # URL ldid vẫn ổn định
         curl -L https://github.com/theos/ldid/releases/download/v2.1.5/ldid_macosx_x86_64 -o $HOME/theos/bin/ldid
         chmod +x $HOME/theos/bin/ldid
-        # Xác minh
-        file $HOME/theos/bin/ldid
     
     - name: Build package
       env:
@@ -73,8 +60,8 @@ jobs:
         make clean
         make package
     
-    - name: Upload .deb artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload package
+      uses: actions/upload-artifact@v4
       with:
-        name: fakecamera-tweak
+        name: fakecamera-deb
         path: packages/*.deb
