@@ -1,9 +1,9 @@
-Package: com.nhacud.fakecamera
+Package: com.yourname.fakecamera
 Name: FakeCamera
-Version: 2.0
-Architecture: iphoneos-arm64
-Description: Fake Camera Hook
-Maintainer: Nha
-Author: Nha
+Version: 1.0
+Architecture: iphoneos-arm
+Description: Fake video camera tweak using AVAssetReader for frame manipulation.
+Maintainer: NhaCud <your@email.com>
+Author: NhaCud
 Section: Tweaks
-Depends: mobilesubstrate
+Depends: mobilesubstrate OR firmware (>= 14.0)  # Adjust tùy jailbreak
