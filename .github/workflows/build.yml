@@ -1,45 +1,44 @@
-name: Build FakeCamera
+name: build
 
 on:
   push:
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: macos-latest
+    
     steps:
-
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y git make perl clang unzip
-
-      - name: Install Theos
-        run: |
-          git clone --recursive https://github.com/theos/theos.git $HOME/theos
-
-      - name: Install Toolchain
-        run: |
-          git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain
-
-      - name: Install SDKs
-        run: |
-          rm -rf $HOME/theos/sdks
-          git clone https://github.com/theos/sdks.git $HOME/theos/sdks
-
-      - name: Build tweak
-        env:
-          THEOS: $HOME/theos
-          PATH: $HOME/theos/toolchain/linux/iphone/bin:$PATH
-        run: |
-          make clean
-          make package
-
-      - name: Upload build
-        uses: actions/upload-artifact@v4
-        with:
-          name: FakeCamera
-          path: packages/*.deb
+    - uses: actions/checkout@v3
+    
+    - name: Setup Theos
+      run: |
+        # Xóa thư mục cũ nếu tồn tại (FIX LỖI)
+        rm -rf $HOME/theos
+        # Clone Theos
+        git clone --recursive https://github.com/theos/theos.git $HOME/theos
+    
+    - name: Clone toolchain
+      run: |
+        # Xóa thư mục toolchain cũ nếu tồn tại (FIX LỖI)
+        rm -rf $HOME/theos/toolchain
+        # Clone toolchain mới
+        git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain
+    
+    - name: Install ldid
+      run: |
+        # Xóa ldid cũ nếu tồn tại
+        rm -f $HOME/theos/bin/ldid
+        # Download và setup ldid
+        curl -LO https://github.com/theos/ldid/releases/download/v2.1.5/ldid_macosx_x86_64
+        chmod +x ldid_macosx_x86_64
+        mv ldid_macosx_x86_64 $HOME/theos/bin/ldid
+    
+    - name: Build package
+      run: |
+        export THEOS=$HOME/theos
+        export THEOS_DEVICE_IP=localhost
+        make clean
+        make package
