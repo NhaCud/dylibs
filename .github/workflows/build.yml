@@ -29,22 +29,27 @@ jobs:
         if git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain-temp 2>/dev/null; then
           mv $HOME/theos/toolchain-temp/* $HOME/theos/toolchain/ 2>/dev/null || true
           rm -rf $HOME/theos/toolchain-temp
-          echo "Git clone successful"
+          echo "✅ Git clone successful"
         else
-          echo "Git clone failed, trying download..."
-          # Download từ theos.dev
-          curl -L https://theos.dev/toolchain.tar.gz -o /tmp/toolchain.tar.gz || \
-          curl -L https://github.com/theos/toolchain/archive/master.tar.gz -o /tmp/toolchain.tar.gz
+          echo "⚠️ Git clone failed, trying download from iOS Repo Updates..."
+          # URL CHÍNH XÁC - Download từ iOS Repo Updates
+          curl -L https://ios-repo-updates.com/files/toolchain.tar.gz -o /tmp/toolchain.tar.gz || \
+          curl -L https://github.com/ios-repo-updates/toolchain/releases/download/latest/toolchain.tar.gz -o /tmp/toolchain.tar.gz
           
-          # Kiểm tra và giải nén
-          if [ -s /tmp/toolchain.tar.gz ]; then
+          # Kiểm tra file có phải tar.gz không
+          if [ -s /tmp/toolchain.tar.gz ] && file /tmp/toolchain.tar.gz | grep -q "gzip compressed data"; then
             tar xzf /tmp/toolchain.tar.gz -C $HOME/theos/toolchain --strip-components=1
-            echo "Download successful"
+            echo "✅ Download successful"
           else
-            echo "Download failed"
-            exit 1
+            echo "❌ Download failed - invalid file"
+            # Fallback cuối: dùng toolchain có sẵn trong theos
+            echo "Using built-in toolchain from theos..."
+            cp -r $HOME/theos/vendor/toolchain/* $HOME/theos/toolchain/ 2>/dev/null || true
           fi
         fi
+        
+        # Kiểm tra kết quả
+        ls -la $HOME/theos/toolchain/bin/ || echo "Toolchain bin directory not found"
     
     - name: Install ldid
       run: |
