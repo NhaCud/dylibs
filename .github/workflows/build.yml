@@ -31,25 +31,18 @@ jobs:
           rm -rf $HOME/theos/toolchain-temp
           echo "✅ Git clone successful"
         else
-          echo "⚠️ Git clone failed, trying download from iOS Repo Updates..."
-          # URL CHÍNH XÁC - Download từ iOS Repo Updates
-          curl -L https://ios-repo-updates.com/files/toolchain.tar.gz -o /tmp/toolchain.tar.gz || \
-          curl -L https://github.com/ios-repo-updates/toolchain/releases/download/latest/toolchain.tar.gz -o /tmp/toolchain.tar.gz
+          echo "⚠️ Git clone failed, trying download..."
+          # URL dự phòng
+          curl -L https://github.com/theos/toolchain/archive/master.tar.gz -o /tmp/toolchain.tar.gz
           
-          # Kiểm tra file có phải tar.gz không
-          if [ -s /tmp/toolchain.tar.gz ] && file /tmp/toolchain.tar.gz | grep -q "gzip compressed data"; then
+          if [ -s /tmp/toolchain.tar.gz ]; then
             tar xzf /tmp/toolchain.tar.gz -C $HOME/theos/toolchain --strip-components=1
             echo "✅ Download successful"
           else
-            echo "❌ Download failed - invalid file"
-            # Fallback cuối: dùng toolchain có sẵn trong theos
-            echo "Using built-in toolchain from theos..."
-            cp -r $HOME/theos/vendor/toolchain/* $HOME/theos/toolchain/ 2>/dev/null || true
+            echo "❌ Download failed"
+            exit 1
           fi
         fi
-        
-        # Kiểm tra kết quả
-        ls -la $HOME/theos/toolchain/bin/ || echo "Toolchain bin directory not found"
     
     - name: Install ldid
       run: |
@@ -59,9 +52,9 @@ jobs:
         chmod +x $HOME/theos/bin/ldid
     
     - name: Build package
-      env:
-        THEOS: $HOME/theos
       run: |
+        export THEOS=$HOME/theos
+        echo "THEOS=$THEOS"
         make clean
         make package
     
