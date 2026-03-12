@@ -15,44 +15,62 @@ jobs:
     
     - name: Setup Theos
       run: |
-        # Xóa thư mục cũ nếu tồn tại
         rm -rf $HOME/theos
-        # Clone Theos (dùng HTTPS với token hoặc dùng cách khác)
         git clone https://github.com/theos/theos.git $HOME/theos
         cd $HOME/theos
         git submodule update --init --recursive
     
-    - name: Setup Toolchain (Cách 1 - Dùng git clone)
-      continue-on-error: true
-      run: |
-        rm -rf $HOME/theos/toolchain
-        git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain
-      id: clone_toolchain
-    
-    - name: Setup Toolchain (Cách 2 - Dùng curl nếu git clone fail)
-      if: steps.clone_toolchain.outcome == 'failure'
+    - name: Setup Toolchain (with multiple fallbacks)
       run: |
         rm -rf $HOME/theos/toolchain
         mkdir -p $HOME/theos/toolchain
-        curl -L https://github.com/theos/toolchain/archive/refs/heads/master.tar.gz | tar xz -C $HOME/theos/toolchain --strip-components=1
+        
+        # Thử clone bằng git (ưu tiên)
+        if git clone https://github.com/theos/toolchain.git $HOME/theos/toolchain-temp; then
+          mv $HOME/theos/toolchain-temp/* $HOME/theos/toolchain/
+          rm -rf $HOME/theos/toolchain-temp
+          echo "✅ Toolchain cloned successfully"
+        else
+          echo "⚠️ Git clone failed, trying download from theos site..."
+          # Fallback 1: Download từ theos official site
+          curl -L https://theos.dev/toolchain.tar.gz -o /tmp/toolchain.tar.gz || \
+          # Fallback 2: Dùng mirror (nếu có)
+          curl -L https://github.com/theos/toolchain/archive/master.tar.gz -o /tmp/toolchain.tar.gz
+          
+          # Kiểm tra file tải về
+          if [ -s /tmp/toolchain.tar.gz ] && file /tmp/toolchain.tar.gz | grep -q "gzip compressed data"; then
+            tar xzf /tmp/toolchain.tar.gz -C $HOME/theos/toolchain --strip-components=1
+            echo "✅ Toolchain downloaded and extracted"
+          else
+            echo "❌ Failed to download toolchain"
+            exit 1
+          fi
+        fi
+        
+        # Verify
+        ls -la $HOME/theos/toolchain/
     
     - name: Install ldid
       run: |
-        # Xóa ldid cũ nếu tồn tại
         rm -f $HOME/theos/bin/ldid
-        # Download và setup ldid (dùng curl thay vì git)
         mkdir -p $HOME/theos/bin
         curl -L https://github.com/theos/ldid/releases/download/v2.1.5/ldid_macosx_x86_64 -o $HOME/theos/bin/ldid
         chmod +x $HOME/theos/bin/ldid
     
-    - name: Verify installation
+    - name: Install iOS SDK
       run: |
-        ls -la $HOME/theos/bin/
-        $HOME/theos/bin/ldid || echo "ldid is installed"
+        cd $HOME/theos
+        ./vendor/download_sdks.sh || echo "SDK download skipped, using existing"
     
     - name: Build package
+      env:
+        THEOS: $HOME/theos
       run: |
-        export THEOS=$HOME/theos
-        export THEOS_DEVICE_IP=localhost
         make clean
         make package
+    
+    - name: Upload package
+      uses: actions/upload-artifact@v3
+      with:
+        name: fakecamera-deb
+        path: packages/*.deb
